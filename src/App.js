@@ -1,68 +1,67 @@
-import React from 'react'
+import React, { Component } from 'react'
 import { Route } from 'react-router-dom'
 
-import { getAll } from './services/BooksAPI'
+import { getAll, update } from './services/BooksAPI'
 import './styles/App.css'
 
 import BooksList from './components/BooksList'
 import Search from './components/Search'
 
-class BooksApp extends React.Component {
+class BooksApp extends Component {
   state = {
-  	books: []
+    books: []
   }
 
-  componentDidMount() {
-  	const books = JSON.parse(localStorage.getItem('books'))
-  	if (books !== null && books.length > 0) this.setState({ books })
+  componentDidMount () {
+    const books = JSON.parse(localStorage.getItem('books'))
+    if (books !== null && books.length > 0) this.setState({ books })
 
-  	// console.log(books);
-
-  	if (!localStorage.getItem('books')) {
-  		getAll().then(books => {
-  			this.setState({ books })
-  			localStorage.setItem('books', JSON.stringify(books))
-  		})
-  	}
+    if (!localStorage.getItem('books')) {
+      getAll().then(books => {
+        this.setState({ books })
+        localStorage.setItem('books', JSON.stringify(books))
+      })
+    }
   }
 
   changeShelf = (book, shelf) => {
-  	book.shelf = shelf
-  	const newBooks = this.state.books.slice(0)
-  	let found = false
-  	for (let i = 0; i < newBooks.length; i++) {
-  		if (newBooks[i].id === book.id) {
-  			newBooks[i].shelf = shelf
-  			found = true
-  			break
-  		}
-  	}
-  	if (!found) newBooks.push(book)
-  	this.setState({ books: newBooks })
-  	localStorage.setItem('books', JSON.stringify(newBooks))
+    book.shelf = shelf
+    const newBooks = this.state.books
+    let found = false
+    newBooks.map(item => {
+      if (item.id === book.id) {
+        newBooks.shelf = shelf
+        found = true
+      }
+      return newBooks
+    })
+
+    if (!found) newBooks.push(book)
+    update(book, shelf)
+    this.setState({ books: newBooks })
+    localStorage.setItem('books', JSON.stringify(newBooks))
   }
 
-  render() {
-  	return (
-  		<div className="app">
-  			<Route
-  				exact
-  				path="/"
-  				component={() => (
-  					<BooksList
-  						books={this.state.books}
-  						onChangeShelf={this.changeShelf}
-  					/>
-  				)}
-  			/>
-  			<Route
-  				path="/search"
-  				component={() => (
-  					<Search books={this.state.books} onChangeShelf={this.changeShelf} />
-  				)}
-  			/>
-  		</div>
-  	)
+  render () {
+    const { books } = this.state
+
+    return (
+      <div className='app'>
+        <Route
+          exact
+          path='/'
+          component={() => (
+            <BooksList books={books} onChangeShelf={this.changeShelf} />
+          )}
+        />
+        <Route
+          path='/search'
+          component={() => (
+            <Search books={books} onChangeShelf={this.changeShelf} />
+          )}
+        />
+      </div>
+    )
   }
 }
 
